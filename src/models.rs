@@ -53,6 +53,8 @@ impl Story {
 // This struct represents the entire db state
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct DBState {
+
+    // Keep track of last ID to create new IDs
     pub last_item_id: u32,
     pub epics: HashMap<u32, Epic>,
     pub stories: HashMap<u32, Story>
