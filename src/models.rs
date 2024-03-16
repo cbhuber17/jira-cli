@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum Status {
     Open,
     InProgress,
@@ -10,7 +10,7 @@ pub enum Status {
     Closed
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Epic {
     pub name: String,
     pub description: String,
@@ -31,7 +31,7 @@ impl Epic {
     }
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Story {
     pub name: String,
     pub description: String,
@@ -51,7 +51,7 @@ impl Story {
 }
 
 // This struct represents the entire db state
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct DBState {
 
     // Keep track of last ID to create new IDs
