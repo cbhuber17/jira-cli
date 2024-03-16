@@ -1,12 +1,102 @@
 use std::fs;
 
-use anyhow::{Ok, Result};
+use anyhow::{anyhow, Ok, Result};
 
 use crate::models::{DBState, Epic, Story, Status};
 
 trait Database {
     fn read_db(&self) -> Result<DBState>;
     fn write_db(&self, db_state: &DBState) -> Result<()>;
+}
+
+pub struct JiraDatabase {
+    database: Box<dyn Database>
+}
+
+impl JiraDatabase {
+    pub fn new(file_path: String) -> Self {
+        Self {
+            database: Box::new(JSONFileDatabase{file_path})
+        }
+    }
+
+    pub fn read_db(&self) -> Result<DBState> {
+        self.database.read_db()
+    }
+    
+    pub fn create_epic(&self, epic: Epic) -> Result<u32> {
+        let mut parsed_db = self.database.read_db()?;
+
+        let new_id = parsed_db.last_item_id + 1;
+
+        parsed_db.last_item_id = new_id;
+        parsed_db.epics.insert(new_id, epic);
+
+        self.database.write_db(&parsed_db)?;
+        Ok(new_id)
+    }
+    
+    pub fn create_story(&self, story: Story, epic_id: u32) -> Result<u32> {
+        let mut parsed_db = self.database.read_db()?;
+
+        let new_id = parsed_db.last_item_id + 1;
+
+        parsed_db.last_item_id = new_id;
+
+        parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!"))?.stories.push(new_id);
+
+        self.database.write_db(&parsed_db)?;
+        Ok(new_id)
+    }
+    
+    pub fn delete_epic(&self, epic_id: u32) -> Result<()> {
+        let mut parsed_db = self.database.read_db()?;
+
+        for story_id in &parsed_db.epics.get(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!"))?.stories {
+            parsed_db.stories.remove(story_id);
+        }
+
+        parsed_db.epics.remove(&epic_id);
+
+        self.database.write_db(&parsed_db)?;
+
+        Ok(())
+    }
+    
+    pub fn delete_story(&self,epic_id: u32, story_id: u32) -> Result<()> {
+        let mut parsed_db = self.database.read_db()?;
+
+        let epic = parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!"))?;
+
+        let story_index = epic.stories.iter().position(|id| id == &story_id).ok_or_else(|| anyhow!("Story id not found in epic stories vector"))?;
+
+        epic.stories.remove(story_index);
+
+        parsed_db.stories.remove(&story_id);
+
+        self.database.write_db(&parsed_db)?;
+
+        Ok(())
+    }
+    
+    pub fn update_epic_status(&self, epic_id: u32, status: Status) -> Result<()> {
+        let mut parsed_db = self.database.read_db()?;
+
+        parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!"))?.status = status;
+
+        self.database.write_db(&parsed_db)?;
+
+        Ok(())
+    }
+    
+    pub fn update_story_status(&self, story_id: u32, status: Status) -> Result<()> {
+        let mut parsed_db = self.database.read_db()?;
+
+        parsed_db.stories.get_mut(&story_id).ok_or_else(|| anyhow!("Could not find story in the database!"))?.status = status;
+
+        self.database.write_db(&parsed_db)?;
+        Ok(())
+    }
 }
 
 struct JSONFileDatabase {
@@ -16,8 +106,8 @@ struct JSONFileDatabase {
 impl Database for JSONFileDatabase {
     fn read_db(&self) -> Result<DBState> {
         let db_content = fs::read_to_string(&self.file_path)?;
-        let parsed: DBState = serde_json::from_str(&db_content)?;
-        Ok(parsed)
+        let parsed_db: DBState = serde_json::from_str(&db_content)?;
+        Ok(parsed_db)
     }
 
     fn write_db(&self, db_state: &DBState) -> Result<()> {
