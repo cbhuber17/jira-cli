@@ -1,13 +1,64 @@
 use crate::{models::{Epic, Story, Status}, io_utils::get_user_input};
 
+/// Contains closures for prompting user input related to Epics and Stories.
+///
+/// The `Prompts` struct holds closures for various user prompts related to creating, deleting,
+/// and updating the status of Epics and Stories. These closures can be invoked to interactively
+/// gather input from the user during runtime.
+///
+/// # Example
+///
+/// ```
+/// use crate::ui::prompts::Prompts;
+/// use crate::models::{Epic, Story, Status};
+///
+/// let prompts = Prompts {
+///     create_epic: Box::new(|| Epic::new()),
+///     create_story: Box::new(|| Story::new()),
+///     delete_epic: Box::new(|| {
+///         // Prompt user for confirmation
+///         true
+///     }),
+///     delete_story: Box::new(|| {
+///         // Prompt user for confirmation
+///         true
+///     }),
+///     update_status: Box::new(|| {
+///         // Prompt user to select a new status
+///         Some(Status::InProgress)
+///     }),
+/// };
+/// ```
 pub struct Prompts {
+    /// Closure for creating a new Epic.
     pub create_epic: Box<dyn Fn() -> Epic>,
+
+    /// Closure for creating a new Story.
     pub create_story: Box<dyn Fn() -> Story>,
+
+    /// Closure for confirming deletion of an Epic.
     pub delete_epic: Box<dyn Fn() -> bool>,
+
+    /// Closure for confirming deletion of a Story.
     pub delete_story: Box<dyn Fn() -> bool>,
+
+    /// Closure for updating the status of an Epic or Story.
     pub update_status: Box<dyn Fn() -> Option<Status>>
 }
 
+/// Constructs a new `Prompts` instance.
+///
+/// This method creates a new `Prompts` instance with default closures for various user prompts
+/// related to Epics and Stories. These closures can be invoked to interactively gather input
+/// from the user during runtime.
+///
+/// # Examples
+///
+/// ```
+/// use crate::ui::prompts::Prompts;
+///
+/// let prompts = Prompts::new();
+/// ```
 impl Prompts {
     pub fn new() -> Self {
         Self { 
@@ -20,6 +71,23 @@ impl Prompts {
     }
 }
 
+/// Prompts the user to create a new Epic.
+///
+/// This function displays prompts to the user to input the name and description of a new Epic.
+/// It then constructs and returns an `Epic` instance with the provided name and description.
+///
+/// # Returns
+///
+/// An `Epic` instance with the provided name and description.
+///
+/// # Examples
+///
+/// ```
+/// use crate::ui::prompts::create_epic_prompt;
+/// use crate::models::Epic;
+///
+/// let epic = create_epic_prompt();
+/// ```
 fn create_epic_prompt() -> Epic {
     println!("----------------------------");
 
@@ -36,6 +104,23 @@ fn create_epic_prompt() -> Epic {
     epic
 }
 
+/// Prompts the user to create a new Story.
+///
+/// This function displays prompts to the user to input the name and description of a new Story.
+/// It then constructs and returns a `Story` instance with the provided name and description.
+///
+/// # Returns
+///
+/// A `Story` instance with the provided name and description.
+///
+/// # Examples
+///
+/// ```
+/// use crate::ui::prompts::create_story_prompt;
+/// use crate::models::Story;
+///
+/// let story = create_story_prompt();
+/// ```
 fn create_story_prompt() -> Story {
     println!("----------------------------");
 
@@ -52,6 +137,23 @@ fn create_story_prompt() -> Story {
     story
 }
 
+/// Prompts the user to confirm deletion of an Epic.
+///
+/// This function displays a prompt to the user to confirm whether they want to delete an Epic.
+/// It then reads the user input and returns `true` if the input is "Y" (case insensitive), indicating
+/// confirmation for deletion. Otherwise, it returns `false`.
+///
+/// # Returns
+///
+/// Returns `true` if the user confirms deletion by entering "Y", otherwise returns `false`.
+///
+/// # Examples
+///
+/// ```
+/// use crate::ui::prompts::delete_epic_prompt;
+///
+/// let confirm_deletion = delete_epic_prompt();
+/// ```
 fn delete_epic_prompt() -> bool {
     println!("----------------------------");
 
@@ -66,6 +168,23 @@ fn delete_epic_prompt() -> bool {
     false
 }
 
+/// Prompts the user to confirm deletion of a Story.
+///
+/// This function displays a prompt to the user to confirm whether they want to delete a Story.
+/// It then reads the user input and returns `true` if the input is "Y" (case insensitive), indicating
+/// confirmation for deletion. Otherwise, it returns `false`.
+///
+/// # Returns
+///
+/// Returns `true` if the user confirms deletion by entering "Y", otherwise returns `false`.
+///
+/// # Examples
+///
+/// ```
+/// use crate::ui::prompts::delete_story_prompt;
+///
+/// let confirm_deletion = delete_story_prompt();
+/// ```
 fn delete_story_prompt() -> bool {
     println!("----------------------------");
 
@@ -80,6 +199,24 @@ fn delete_story_prompt() -> bool {
     false
 }
 
+/// Prompts the user to select a new status for an Epic or a Story.
+///
+/// This function displays a prompt to the user to select a new status from a list of options.
+/// It then reads the user input and returns an `Option<Status>` representing the selected status.
+///
+/// # Returns
+///
+/// Returns `Some(Status)` representing the selected status if the user input is a valid status option,
+/// otherwise returns `None`.
+///
+/// # Examples
+///
+/// ```
+/// use crate::ui::prompts::update_status_prompt;
+/// use crate::models::Status;
+///
+/// let new_status = update_status_prompt();
+/// ```
 fn update_status_prompt() -> Option<Status> {
     println!("----------------------------");
 

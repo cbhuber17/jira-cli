@@ -4,26 +4,167 @@ use anyhow::{anyhow, Ok, Result};
 
 use crate::models::{DBState, Epic, Story, Status};
 
+/// Trait for interacting with the database in the JIRA-like CLI tool.
+///
+/// The `Database` trait defines methods for reading from and writing to the database.
+///
+/// # Examples
+///
+/// ```
+/// use crate::db::Database;
+/// use crate::models::DBState;
+/// use anyhow::Result;
+///
+/// struct MyDatabase;
+///
+/// impl Database for MyDatabase {
+///     fn read_db(&self) -> Result<DBState> {
+///         // Implementation for reading from the database
+///         unimplemented!()
+///     }
+///
+///     fn write_db(&self, db_state: &DBState) -> Result<()> {
+///         // Implementation for writing to the database
+///         unimplemented!()
+///     }
+/// }
+/// ```
 pub trait Database {
+    /// Reads the database state.
+    ///
+    /// This method reads the state of the database and returns it as a `DBState` instance.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the `DBState` instance if the read operation is successful,
+    /// otherwise returns an `Err` containing an error.
     fn read_db(&self) -> Result<DBState>;
+
+    /// Writes the database state.
+    ///
+    /// This method writes the provided database state to the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `db_state` - The database state to be written.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating success or failure of the write operation.
     fn write_db(&self, db_state: &DBState) -> Result<()>;
 }
 
+/// Represents the JIRA-like database in the CLI tool.
+///
+/// The `JiraDatabase` struct represents the database used in the JIRA-like CLI tool.
+/// It contains a field `database` which is a boxed trait object implementing the `Database` trait.
+///
+/// # Examples
+///
+/// ```
+/// use crate::db::JiraDatabase;
+/// use crate::db::Database;
+///
+/// let my_database: Box<dyn Database> = // instantiate your database implementation;
+/// let jira_database = JiraDatabase { database: my_database };
+/// ```
 pub struct JiraDatabase {
+
+    /// The database instance implementing the `Database` trait.
     pub database: Box<dyn Database>
 }
 
 impl JiraDatabase {
+
+    /// Constructs a new `JiraDatabase` instance.
+    ///
+    /// This method creates a new `JiraDatabase` instance with the provided file path.
+    /// It initializes the `database` field with a boxed instance of `JSONFileDatabase`, which
+    /// implements the `Database` trait and operates on a JSON file located at the specified path.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - The path to the JSON file storing the database state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JiraDatabase;
+    ///
+    /// let file_path = "database.json".to_string();
+    /// let jira_database = JiraDatabase::new(file_path);
+    /// ```
     pub fn new(file_path: String) -> Self {
         Self {
             database: Box::new(JSONFileDatabase{file_path})
         }
     }
 
+    /// Reads the database state.
+    ///
+    /// This method delegates the task of reading the database state to the underlying database
+    /// implementation stored in the `database` field. It invokes the `read_db` method on the
+    /// database instance and returns the result.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the `DBState` instance if the read operation is successful,
+    /// otherwise returns an `Err` containing an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JiraDatabase;
+    /// use anyhow::Result;
+    ///
+    /// let jira_database = // instantiate your JiraDatabase instance;
+    /// match jira_database.read_db() {
+    ///     Ok(db_state) => {
+    ///         // Handle the retrieved database state
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     pub fn read_db(&self) -> Result<DBState> {
         self.database.read_db()
     }
     
+    /// Creates a new Epic in the database.
+    ///
+    /// This method creates a new Epic in the database by inserting the provided Epic instance
+    /// with an automatically generated ID. It retrieves the current database state, increments
+    /// the last item ID, inserts the new Epic into the database with the generated ID, and then
+    /// writes the updated state back to the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `epic` - The Epic instance to be created.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the ID of the newly created Epic if the operation is successful,
+    /// otherwise returns an `Err` containing an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JiraDatabase;
+    /// use crate::models::Epic;
+    /// use anyhow::Result;
+    ///
+    /// let jira_database = // instantiate your JiraDatabase instance;
+    /// let new_epic = Epic::new("New Epic Name".to_string(), "New Epic Description".to_string());
+    /// match jira_database.create_epic(new_epic) {
+    ///     Ok(epic_id) => {
+    ///         // Handle the ID of the newly created Epic
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     pub fn create_epic(&self, epic: Epic) -> Result<u32> {
         let mut parsed_db = self.database.read_db()?;
 
@@ -36,6 +177,44 @@ impl JiraDatabase {
         Ok(new_id)
     }
     
+    /// Creates a new Story in the database and associates it with an Epic.
+    ///
+    /// This method creates a new Story in the database by inserting the provided Story instance
+    /// with an automatically generated ID. It also associates the newly created Story with the
+    /// specified Epic by adding its ID to the list of stories in the Epic. It retrieves the current
+    /// database state, increments the last item ID, inserts the new Story into the database with
+    /// the generated ID, updates the list of stories for the specified Epic, and then writes the
+    /// updated state back to the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `story` - The Story instance to be created.
+    /// * `epic_id` - The ID of the Epic to associate the Story with.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the ID of the newly created Story if the operation is successful,
+    /// otherwise returns an `Err` containing an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JiraDatabase;
+    /// use crate::models::{Story, Status};
+    /// use anyhow::Result;
+    ///
+    /// let jira_database = // instantiate your JiraDatabase instance;
+    /// let new_story = Story::new("New Story Name".to_string(), "New Story Description".to_string());
+    /// let epic_id = 1; // ID of the associated Epic
+    /// match jira_database.create_story(new_story, epic_id) {
+    ///     Ok(story_id) => {
+    ///         // Handle the ID of the newly created Story
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     pub fn create_story(&self, story: Story, epic_id: u32) -> Result<u32> {
         let mut parsed_db = self.database.read_db()?;
 
@@ -50,6 +229,40 @@ impl JiraDatabase {
         Ok(new_id)
     }
     
+
+    /// Deletes an Epic and its associated Stories from the database.
+    ///
+    /// This method deletes an Epic and its associated Stories from the database by removing
+    /// them from the database state. It retrieves the current database state, removes all
+    /// Stories associated with the specified Epic, removes the Epic itself, and then writes
+    /// the updated state back to the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `epic_id` - The ID of the Epic to be deleted.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating success if the operation is successful, otherwise returns
+    /// an `Err` containing an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JiraDatabase;
+    /// use anyhow::Result;
+    ///
+    /// let jira_database = // instantiate your JiraDatabase instance;
+    /// let epic_id = 1; // ID of the Epic to delete
+    /// match jira_database.delete_epic(epic_id) {
+    ///     Ok(()) => {
+    ///         // Handle successful deletion
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     pub fn delete_epic(&self, epic_id: u32) -> Result<()> {
         let mut parsed_db = self.database.read_db()?;
 
@@ -64,6 +277,41 @@ impl JiraDatabase {
         Ok(())
     }
     
+    /// Deletes a Story from the database.
+    ///
+    /// This method deletes a Story from the database by removing it from the database state
+    /// and removing its association with the specified Epic. It retrieves the current database
+    /// state, finds the specified Epic, removes the Story from its list of associated Stories,
+    /// removes the Story itself, and then writes the updated state back to the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `epic_id` - The ID of the Epic that the Story belongs to.
+    /// * `story_id` - The ID of the Story to be deleted.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating success if the operation is successful, otherwise returns
+    /// an `Err` containing an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JiraDatabase;
+    /// use anyhow::Result;
+    ///
+    /// let jira_database = // instantiate your JiraDatabase instance;
+    /// let epic_id = 1; // ID of the Epic that the Story belongs to
+    /// let story_id = 1; // ID of the Story to delete
+    /// match jira_database.delete_story(epic_id, story_id) {
+    ///     Ok(()) => {
+    ///         // Handle successful deletion
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     pub fn delete_story(&self,epic_id: u32, story_id: u32) -> Result<()> {
         let mut parsed_db = self.database.read_db()?;
 
@@ -80,6 +328,41 @@ impl JiraDatabase {
         Ok(())
     }
     
+    /// Updates the status of an Epic in the database.
+    ///
+    /// This method updates the status of an Epic in the database to the specified status.
+    /// It retrieves the current database state, finds the specified Epic, updates its status,
+    /// and then writes the updated state back to the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `epic_id` - The ID of the Epic to update.
+    /// * `status` - The new status to assign to the Epic.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating success if the operation is successful, otherwise returns
+    /// an `Err` containing an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JiraDatabase;
+    /// use crate::models::Status;
+    /// use anyhow::Result;
+    ///
+    /// let jira_database = // instantiate your JiraDatabase instance;
+    /// let epic_id = 1; // ID of the Epic to update
+    /// let new_status = Status::InProgress; // New status to assign to the Epic
+    /// match jira_database.update_epic_status(epic_id, new_status) {
+    ///     Ok(()) => {
+    ///         // Handle successful status update
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     pub fn update_epic_status(&self, epic_id: u32, status: Status) -> Result<()> {
         let mut parsed_db = self.database.read_db()?;
 
@@ -90,6 +373,41 @@ impl JiraDatabase {
         Ok(())
     }
     
+    /// Updates the status of a Story in the database.
+    ///
+    /// This method updates the status of a Story in the database to the specified status.
+    /// It retrieves the current database state, finds the specified Story, updates its status,
+    /// and then writes the updated state back to the database.
+    ///
+    /// # Arguments
+    ///
+    /// * `story_id` - The ID of the Story to update.
+    /// * `status` - The new status to assign to the Story.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` indicating success if the operation is successful, otherwise returns
+    /// an `Err` containing an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JiraDatabase;
+    /// use crate::models::Status;
+    /// use anyhow::Result;
+    ///
+    /// let jira_database = // instantiate your JiraDatabase instance;
+    /// let story_id = 1; // ID of the Story to update
+    /// let new_status = Status::InProgress; // New status to assign to the Story
+    /// match jira_database.update_story_status(story_id, new_status) {
+    ///     Ok(()) => {
+    ///         // Handle successful status update
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     pub fn update_story_status(&self, story_id: u32, status: Status) -> Result<()> {
         let mut parsed_db = self.database.read_db()?;
 
@@ -100,22 +418,104 @@ impl JiraDatabase {
     }
 }
 
+/// JSONFileDatabase represents a database stored in a JSON file.
+///
+/// This struct stores the file path to the JSON file where the database is stored.
+///
+/// # Examples
+///
+/// ```
+/// use crate::db::JSONFileDatabase;
+///
+/// let file_path = "/path/to/database.json".to_string();
+/// let json_file_db = JSONFileDatabase { file_path };
+/// ```
 struct JSONFileDatabase {
     pub file_path: String
 }
 
 impl Database for JSONFileDatabase {
+
+    /// Reads the database state from the JSON file.
+    ///
+    /// This method reads the database state from the JSON file specified by `file_path`.
+    /// It reads the file content, deserializes it into a `DBState` struct, and returns it.
+    ///
+    /// # Errors
+    ///
+    /// This method can return an error if:
+    /// * The file cannot be read.
+    /// * The file content cannot be deserialized into a `DBState` struct.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the deserialized `DBState` if the operation is successful,
+    /// otherwise returns an `Err` containing an error.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JSONFileDatabase;
+    /// use anyhow::Result;
+    ///
+    /// let file_path = "/path/to/database.json".to_string();
+    /// let json_file_db = JSONFileDatabase { file_path };
+    /// match json_file_db.read_db() {
+    ///     Ok(db_state) => {
+    ///         // Use the retrieved database state
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     fn read_db(&self) -> Result<DBState> {
         let db_content = fs::read_to_string(&self.file_path)?;
         let parsed_db: DBState = serde_json::from_str(&db_content)?;
         Ok(parsed_db)
     }
 
+    /// Writes the database state to the JSON file.
+    ///
+    /// This method writes the provided database state to the JSON file specified by `file_path`.
+    /// It serializes the `DBState` struct into JSON format and writes it to the file.
+    ///
+    /// # Arguments
+    ///
+    /// * `db_state` - A reference to the `DBState` struct containing the database state to be written.
+    ///
+    /// # Errors
+    ///
+    /// This method can return an error if:
+    /// * The file cannot be written.
+    /// * The database state cannot be serialized into JSON format.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::db::JSONFileDatabase;
+    /// use crate::models::DBState;
+    /// use anyhow::Result;
+    ///
+    /// let file_path = "/path/to/database.json".to_string();
+    /// let json_file_db = JSONFileDatabase { file_path };
+    /// let db_state = DBState { /* Populate DBState fields */ };
+    /// match json_file_db.write_db(&db_state) {
+    ///     Ok(()) => {
+    ///         // Database state successfully written to the file
+    ///     }
+    ///     Err(err) => {
+    ///         // Handle the error
+    ///     }
+    /// }
+    /// ```
     fn write_db(&self, db_state: &DBState) -> Result<()> {
         fs::write(&self.file_path, &serde_json::to_vec(db_state)?)?;
         Ok(())
     }
 }
+
+// UNIT TESTING UTILS ------------------------------------------------------------------------------------
 
 pub mod test_utils {
     use std::{cell::RefCell, collections::HashMap};
@@ -145,6 +545,8 @@ pub mod test_utils {
         }
     }
 }
+
+// ------------------------------------------------------------------------------- UNIT TESTING
 
 #[cfg(test)]
 mod tests {

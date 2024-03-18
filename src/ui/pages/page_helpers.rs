@@ -1,5 +1,32 @@
 use ellipse::Ellipse;
 
+/// Generates a formatted string for displaying text in a column with a specified width.
+///
+/// This function takes a `text` string and a `width` usize as input parameters. It formats
+/// the `text` to fit within the specified `width` for column display purposes. If the length
+/// of the `text` is equal to the `width`, it returns the original `text`. If the length is less
+/// than the `width`, it pads the `text` with spaces on the right to fill the remaining space.
+/// If the length exceeds the `width`, it truncates the `text` and adds an ellipsis at the end.
+///
+/// # Arguments
+///
+/// * `text` - The input string to be formatted for column display.
+/// * `width` - The width of the column in which the text will be displayed.
+///
+/// # Returns
+///
+/// A formatted string suitable for displaying within a column of the specified width.
+///
+/// # Examples
+///
+/// ```
+/// use crate::page_helpers::get_column_string;
+///
+/// let text = "Example";
+/// let width = 10;
+/// let formatted_text = get_column_string(text, width);
+/// assert_eq!(formatted_text, "Example   ");
+/// ```
 pub fn get_column_string(text: &str, width: usize) -> String {
     let len = text.len();
 
