@@ -509,13 +509,14 @@ impl Database for JSONFileDatabase {
     /// }
     /// ```
     fn write_db(&self, db_state: &DBState) -> Result<()> {
-        fs::write(&self.file_path, &serde_json::to_vec(db_state)?)?;
+        fs::write(&self.file_path, serde_json::to_vec(db_state)?)?;
         Ok(())
     }
 }
 
 // UNIT TESTING UTILS ------------------------------------------------------------------------------------
 
+#[cfg(test)]
 pub mod test_utils {
     use std::{cell::RefCell, collections::HashMap};
 
