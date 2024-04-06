@@ -1,4 +1,5 @@
 use crate::{models::{Epic, Story, Status}, io_utils::get_user_input};
+use colored::Colorize;
 
 /// Contains closures for prompting user input related to Epics and Stories.
 ///
@@ -89,13 +90,13 @@ impl Prompts {
 /// let epic = create_epic_prompt();
 /// ```
 fn create_epic_prompt() -> Epic {
-    println!("----------------------------");
+    println!("{}", "----------------------------".green());
 
-    println!("Epic Name: ");
+    println!("{} ", "Epic Name:".yellow());
 
     let epic_name = get_user_input();
 
-    println!("Epic Description: ");
+    println!("{} ", "Epic Description:".yellow());
 
     let epic_desc = get_user_input();
 
@@ -122,13 +123,13 @@ fn create_epic_prompt() -> Epic {
 /// let story = create_story_prompt();
 /// ```
 fn create_story_prompt() -> Story {
-    println!("----------------------------");
+    println!("{}", "----------------------------".green());
 
-    println!("Story Name: ");
+    println!("{} ", "Story Name:".yellow());
 
     let story_name = get_user_input();
 
-    println!("Story Description: ");
+    println!("{} ", "Story Description:".yellow());
 
     let story_desc = get_user_input();
 
@@ -155,9 +156,9 @@ fn create_story_prompt() -> Story {
 /// let confirm_deletion = delete_epic_prompt();
 /// ```
 fn delete_epic_prompt() -> bool {
-    println!("----------------------------");
+    println!("{}", "----------------------------".green());
 
-    println!("Are you sure you want to delete this epic? All stories in this epic will also be deleted [Y/n]: ");
+    println!("{} ", "Are you sure you want to delete this epic? All stories in this epic will also be deleted [Y/n]:".red().bold());
 
     let input = get_user_input();
 
@@ -186,9 +187,9 @@ fn delete_epic_prompt() -> bool {
 /// let confirm_deletion = delete_story_prompt();
 /// ```
 fn delete_story_prompt() -> bool {
-    println!("----------------------------");
+    println!("{}", "----------------------------".green());
 
-    println!("Are you sure you want to delete this story? [Y/n]: ");
+    println!("{} ", "Are you sure you want to delete this story? [Y/n]:".red().bold());
 
     let input = get_user_input();
 
@@ -218,9 +219,13 @@ fn delete_story_prompt() -> bool {
 /// let new_status = update_status_prompt();
 /// ```
 fn update_status_prompt() -> Option<Status> {
-    println!("----------------------------");
+    println!("{}", "----------------------------".green());
 
-    println!("New Status (1 - OPEN, 2 - IN-PROGRESS, 3 - RESOLVED, 4 - CLOSED): ");
+    println!("New Status ({}, {}, {}, {}): ",
+             "1 - OPEN".green(),
+             "2 - IN-PROGRESS".yellow(),
+             "3 - RESOLVED".blue(),
+             "4 - CLOSED".red());
 
     let status = get_user_input();
 

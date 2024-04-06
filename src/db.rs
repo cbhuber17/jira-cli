@@ -1,8 +1,7 @@
 use std::fs;
-
 use anyhow::{anyhow, Ok, Result};
-
 use crate::models::{DBState, Epic, Story, Status};
+use colored::Colorize;
 
 /// Trait for interacting with the database in the JIRA-like CLI tool.
 ///
@@ -223,7 +222,7 @@ impl JiraDatabase {
         parsed_db.last_item_id = new_id;
         parsed_db.stories.insert(new_id, story);
 
-        parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!"))?.stories.push(new_id);
+        parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!".red()))?.stories.push(new_id);
 
         self.database.write_db(&parsed_db)?;
         Ok(new_id)
@@ -266,7 +265,7 @@ impl JiraDatabase {
     pub fn delete_epic(&self, epic_id: u32) -> Result<()> {
         let mut parsed_db = self.database.read_db()?;
 
-        for story_id in &parsed_db.epics.get(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!"))?.stories {
+        for story_id in &parsed_db.epics.get(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!".red()))?.stories {
             parsed_db.stories.remove(story_id);
         }
 
@@ -315,9 +314,9 @@ impl JiraDatabase {
     pub fn delete_story(&self,epic_id: u32, story_id: u32) -> Result<()> {
         let mut parsed_db = self.database.read_db()?;
 
-        let epic = parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!"))?;
+        let epic = parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!".red()))?;
 
-        let story_index = epic.stories.iter().position(|id| id == &story_id).ok_or_else(|| anyhow!("Story id not found in epic stories vector"))?;
+        let story_index = epic.stories.iter().position(|id| id == &story_id).ok_or_else(|| anyhow!("Story id not found in epic stories vector".red()))?;
 
         epic.stories.remove(story_index);
 
@@ -366,7 +365,7 @@ impl JiraDatabase {
     pub fn update_epic_status(&self, epic_id: u32, status: Status) -> Result<()> {
         let mut parsed_db = self.database.read_db()?;
 
-        parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!"))?.status = status;
+        parsed_db.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("Could not find epic in the database!".red()))?.status = status;
 
         self.database.write_db(&parsed_db)?;
 
@@ -411,7 +410,7 @@ impl JiraDatabase {
     pub fn update_story_status(&self, story_id: u32, status: Status) -> Result<()> {
         let mut parsed_db = self.database.read_db()?;
 
-        parsed_db.stories.get_mut(&story_id).ok_or_else(|| anyhow!("Could not find story in the database!"))?.status = status;
+        parsed_db.stories.get_mut(&story_id).ok_or_else(|| anyhow!("Could not find story in the database!".red()))?.status = status;
 
         self.database.write_db(&parsed_db)?;
         Ok(())

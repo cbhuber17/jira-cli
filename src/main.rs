@@ -8,6 +8,7 @@ use std::rc::Rc;
 use db::*;
 use io_utils::*;
 use navigator::*;
+use colored::Colorize;
 
 /// Main execution loop for the JIRA-like CLI application.
 ///
@@ -27,7 +28,7 @@ fn main() {
 
         if let Some(page) = navigator.get_current_page() {
             if let Err(error) = page.draw_page() {
-                println!("Error rendering page: {}\nPress any key to continue...", error);
+                println!("{} {}\nPress any key to continue...", "Error rendering page:".red(), error);
                 wait_for_key_press();
             };
 
@@ -35,13 +36,13 @@ fn main() {
 
             match page.handle_input(user_input.trim()) {
                 Err(error) => {
-                    println!("Error getting user input: {}\nPress any key to continue...", error);
+                    println!("{} {}\nPress any key to continue...", "Error getting user input:".red(), error);
                     wait_for_key_press();
                 }
                 Ok(action) => {
                     if let Some(action) = action {
                         if let Err(error) = navigator.handle_action(action) {
-                            println!("Error handling processing user input: {}\nPress any key to continue...", error);
+                            println!("{} {}\nPress any key to continue...", "Error handling processing user input:".red(), error);
                             wait_for_key_press();
                         }
                     }

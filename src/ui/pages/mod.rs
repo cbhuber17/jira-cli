@@ -1,15 +1,59 @@
 use std::any::Any;
 use std::rc::Rc;
 
+use colored::ColoredString;
 use itertools::Itertools;
 use anyhow::Result;
 use anyhow::anyhow;
+use colored::Colorize;
 
 use crate::db::JiraDatabase;
 use crate::models::Action;
 
 mod page_helpers;
 use page_helpers::*;
+
+/// Returns a colored string corresponding to the given status.
+///
+/// # Arguments
+///
+/// * `status` - A string slice representing the status.
+///
+/// # Example
+///
+/// ```
+/// use colored::ColoredString;
+///
+/// let status = "OPEN";
+/// let colored_status = get_status_color(status);
+/// println!("{}", colored_status);
+/// ```
+///
+/// # Panics
+///
+/// If the provided `status` is not recognized, the function returns an empty colored string.
+///
+/// # Notes
+///
+/// - The recognized status values are "OPEN", "IN PROGRESS", "RESOLVED", and "CLOSED".
+///
+/// # Returns
+///
+/// A `ColoredString` representing the colorized version of the status.
+///
+/// # Dependencies
+///
+/// This function requires the `colored` crate to be included in your project.
+///
+fn get_status_color(status: &str) -> ColoredString {
+    match status.trim() {
+        "OPEN" => "OPEN".cyan(),
+        "IN PROGRESS" => "IN PROGRESS".yellow(),
+        "RESOLVED" => "RESOLVED".green(),
+        "CLOSED" => "CLOSED".blue(),
+        _ => "".clear()
+    }
+}
 
 /// A trait representing a page in the user interface.
 ///
@@ -126,8 +170,8 @@ impl Page for HomePage {
     /// assert!(result.is_ok());
     /// ```
     fn draw_page(&self) -> Result<()> {
-        println!("----------------------------- EPICS -----------------------------");
-        println!("     id     |               name               |      status      ");
+        println!("{}", "----------------------------- EPICS -----------------------------".cyan());
+        println!("{}", "     id     |               name               |      status      ".cyan());
 
         let epics = self.db.read_db()?.epics;
 
@@ -136,13 +180,22 @@ impl Page for HomePage {
             let id_col = get_column_string(&id.to_string(), 11);
             let name_col = get_column_string(&epic.name, 32);
             let status_col = get_column_string(&epic.status.to_string(), 17);
-            println!("{} | {} | {}", id_col, name_col, status_col);
+            let status_color = get_status_color(&status_col);
+
+            println!("{} {} {} {} {}",
+                                    id_col,
+                                    "|".cyan(),
+                                    name_col,
+                                    "|".cyan(),
+                                    status_color);
         }
 
         println!();
         println!();
 
-        println!("[q] quit | [c] create epic | [:id:] navigate to epic");
+        println!("{} | {} | {}", "[q] quit".red(),
+                                 "[c] create epic".green(),
+                                 "[:id:] navigate to epic".yellow());
 
         Ok(())
     }
@@ -283,21 +336,30 @@ impl Page for EpicDetail {
     /// ```
     fn draw_page(&self) -> Result<()> {
         let db_state = self.db.read_db()?;
-        let epic = db_state.epics.get(&self.epic_id).ok_or_else(|| anyhow!("could not find epic!"))?;
+        let epic = db_state.epics.get(&self.epic_id).ok_or_else(|| anyhow!("could not find epic!".red().bold()))?;
 
-        println!("------------------------------ EPIC ------------------------------");
-        println!("  id  |     name     |         description         |    status    ");
+        println!("{}", "------------------------------ EPIC ------------------------------".cyan());
+        println!("{}", "  id  |     name     |         description         |    status    ".cyan());
 
         let id_col = get_column_string(&self.epic_id.to_string(), 5);
         let name_col = get_column_string(&epic.name, 12);
         let desc_col = get_column_string(&epic.description, 27);
         let status_col = get_column_string(&epic.status.to_string(), 13);
-        println!("{} | {} | {} | {}", id_col, name_col, desc_col, status_col);
+        let status_color = get_status_color(&status_col);
+
+        println!("{} {} {} {} {} {} {}",
+                                     id_col,
+                                     "|".cyan(),
+                                     name_col,
+                                     "|".cyan(),
+                                     desc_col,
+                                     "|".cyan(),
+                                     status_color);
         
         println!();
 
-        println!("---------------------------- STORIES ----------------------------");
-        println!("     id     |               name               |      status      ");
+        println!("{}", "---------------------------- STORIES ----------------------------".cyan());
+        println!("{}", "     id     |               name               |      status      ".cyan());
 
         let stories = &db_state.stories;
 
@@ -306,13 +368,29 @@ impl Page for EpicDetail {
             let id_col = get_column_string(&id.to_string(), 11);
             let name_col = get_column_string(&story.name, 32);
             let status_col = get_column_string(&story.status.to_string(), 17);
-            println!("{} | {} | {}", id_col, name_col, status_col);
+            let status_color = get_status_color(&status_col);
+
+            println!("{} {} {} {} {}",
+                                   id_col,
+                                   "|".cyan(),
+                                   name_col,
+                                   "|".cyan(),
+                                   status_color);
         }
 
         println!();
         println!();
 
-        println!("[p] previous | [u] update epic | [d] delete epic | [c] create story | [:id:] navigate to story");
+        println!("{} {} {} {} {} {} {} {} {}",
+                                            "[p] previous".green(),
+                                            "|".cyan(),
+                                            "[u] update epic".yellow(),
+                                            "|".cyan(),
+                                            "[d] delete epic".red(),
+                                            "|".cyan(),
+                                            "[c] create story".blue(),
+                                            "|".cyan(),
+                                            "[:id:] navigate to story".purple());
 
         Ok(())
     }
@@ -466,21 +544,34 @@ impl Page for StoryDetail {
     /// ```
     fn draw_page(&self) -> Result<()> {
         let db_state = self.db.read_db()?;
-        let story = db_state.stories.get(&self.story_id).ok_or_else(|| anyhow!("could not find story!"))?;
+        let story = db_state.stories.get(&self.story_id).ok_or_else(|| anyhow!("could not find story!".red().bold()))?;
 
-        println!("------------------------------ STORY ------------------------------");
-        println!("  id  |     name     |         description         |    status    ");
+        println!("{}", "------------------------------ STORY ------------------------------".cyan());
+        println!("{}", "  id  |     name     |         description         |    status     ".cyan());
         
         let id_col = get_column_string(&self.story_id.to_string(), 5);
         let name_col = get_column_string(&story.name, 12);
         let desc_col = get_column_string(&story.description, 27);
         let status_col = get_column_string(&story.status.to_string(), 13);
-        println!("{} | {} | {} | {}", id_col, name_col, desc_col, status_col);
+        let status_color = get_status_color(&status_col);
+
+        println!("{} {} {} {} {} {} {}",
+                                     id_col,
+                                     "|".cyan(),
+                                     name_col,
+                                     "|".cyan(),
+                                     desc_col,
+                                     "|".cyan(),
+                                     status_color);
 
         println!();
         println!();
 
-        println!("[p] previous | [u] update story | [d] delete story");
+        println!("{} {} {} {} {}", "[p] previous".green(),
+                                   "|".cyan(),
+                                   "[u] update story".yellow(), 
+                                   "|".cyan(),
+                                   "[d] delete story".red());
 
         Ok(())
     }
