@@ -29,6 +29,10 @@ use colored::Colorize;
 /// }
 /// ```
 pub trait Database {
+
+    /// Returns the path to the file of the data in the JSON Database
+    fn get_file_path(&self) -> &str;
+
     /// Reads the database state.
     ///
     /// This method reads the state of the database and returns it as a `DBState` instance.
@@ -435,6 +439,11 @@ struct JSONFileDatabase {
 
 impl Database for JSONFileDatabase {
 
+    /// Returns the path to the file of the data in the JSON Database
+    fn get_file_path(&self) -> &str {
+        &self.file_path
+    }
+
     /// Reads the database state from the JSON file.
     ///
     /// This method reads the database state from the JSON file specified by `file_path`.
@@ -533,6 +542,10 @@ pub mod test_utils {
     }
 
     impl Database for MockDB {
+        fn get_file_path(&self) -> &str {
+            &""
+        }
+
         fn read_db(&self) -> Result<DBState> {
             let state = self.last_written_state.borrow().clone();
             Ok(state)

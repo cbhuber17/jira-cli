@@ -28,7 +28,7 @@ fn main() {
 
         if let Some(page) = navigator.get_current_page() {
             if let Err(error) = page.draw_page() {
-                println!("{} {}\nPress any key to continue...", "Error rendering page:".red(), error);
+                println!("{} {}. File: {}\nPress any key to continue or CTRL+C to quit.", "Error rendering page:".red(), error, db.database.get_file_path());
                 wait_for_key_press();
             };
 
