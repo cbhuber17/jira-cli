@@ -29,3 +29,13 @@ Database, storage and persistence are often used interchangeably. They represent
 **CRUD**
 
 CRUD stands for actions of creation, read, update & deletion.
+
+## Docker
+
+```
+docker build -t jira-cli .
+```
+
+```
+docker run -it --rm --name jira-ctr jira-cli
+```
