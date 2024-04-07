@@ -47,7 +47,7 @@ use page_helpers::*;
 ///
 fn get_status_color(status: &str) -> ColoredString {
     match status.trim() {
-        "OPEN" => "OPEN".cyan(),
+        "OPEN" => "OPEN".purple(),
         "IN PROGRESS" => "IN PROGRESS".yellow(),
         "RESOLVED" => "RESOLVED".green(),
         "CLOSED" => "CLOSED".blue(),
