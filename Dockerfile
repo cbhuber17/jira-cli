@@ -1,4 +1,4 @@
-FROM rust:1.76 as build
+FROM rust:1.76.0-slim-buster as build
 
 # Create a new empty shell project
 RUN USER=root cargo new --bin jira-cli
