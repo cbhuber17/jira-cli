@@ -32,9 +32,13 @@ CRUD stands for actions of creation, read, update & deletion.
 
 ## Docker
 
+Build the image with the following command:
+
 ```
 docker build -t jira-cli .
 ```
+
+Run the program with the following command:
 
 ```
 docker run -it --rm --name jira-ctr jira-cli
